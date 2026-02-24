@@ -13,6 +13,11 @@ systems.
 
 ---
 
+🔗 **Live Demo:**  
+👉 https://ai-powered-financial-entry-automation-tool-jxzmwjrowlc4g5ftuzm.streamlit.app/
+
+---
+
 ## 🎯 Target Audience
 
 This tool is intended for:
