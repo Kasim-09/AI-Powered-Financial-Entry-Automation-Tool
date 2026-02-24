@@ -102,8 +102,16 @@ with st.sidebar:
     show_raw = st.toggle("Show raw extracted rows", value=False)
     show_debug = st.toggle("Show debug details", value=False)
     st.markdown("---")
-    st.caption("Tip: If extraction looks off, try another PDF export or scanned-version text layer.")
+    # st.caption("Tip: If extraction looks off, try another PDF export or scanned-version text layer.")
+    st.warning(
+        """🔐 **Privacy Notice**
+        • Uploads are processed temporarily for this session and are not intended to be stored.  
+        • Do not upload confidential bank statements to the public demo.  
+        """
+    )
 
+    st.markdown("---")
+    st.caption("© 2026 KasimHussain Vijapura · Developed for financial automation")
 if uploaded is None:
     st.info("Upload a PDF from the sidebar to begin.")
     st.stop()
@@ -233,3 +241,12 @@ with tab_export:
             use_container_width=False,
         )
         st.caption("If your downstream system is strict, keep descriptions comma-free and ensure numeric fields are valid.")
+st.markdown(
+    """
+---
+<div style="text-align:center; font-size:0.9rem; opacity:0.8;">
+© 2026 KasimHussain Vijapura · Developed with ❤️ for financial automation
+</div>
+""",
+    unsafe_allow_html=True,
+)
