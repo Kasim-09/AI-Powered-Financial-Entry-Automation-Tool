@@ -170,7 +170,7 @@ elif summary["warnings"] > 0:
 else:
     st.success("All checks passed. You can export safely.")
 
-# -----------------------------
+# ---------------------------
 # Main content: tabs
 # -----------------------------
 tab_preview, tab_issues, tab_export = st.tabs(["📊 Preview", "🛡️ Validation", "⬇️ Export"])
