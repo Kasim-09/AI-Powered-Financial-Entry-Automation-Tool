@@ -98,6 +98,81 @@ Users can:
 - Numeric fields normalized  
 
 ---
+---
+
+## 🔐 Encrypted PDF Support (NEW FEATURE)
+
+### What it does
+
+The application now automatically detects and processes **password-protected (encrypted) bank statement PDFs**.
+
+If a user uploads an encrypted PDF, the system:
+
+1. Detects encryption automatically  
+2. Attempts to unlock the PDF  
+3. Prompts for a password only if required  
+4. Removes encryption securely in memory  
+5. Continues processing normally  
+
+This ensures encrypted PDFs no longer cause the application to fail.
+
+---
+
+### 💡 How It Works
+
+- The system checks whether the uploaded PDF is encrypted  
+- If encrypted:
+  - It first attempts to open using a blank password  
+  - If unsuccessful, the user is prompted to enter the correct password  
+- Once unlocked, the tool creates a temporary unencrypted version  
+- All existing extraction, cleaning, validation, and export steps run unchanged  
+
+No external tools or APIs are used — the feature is implemented using Python-native PDF libraries.
+
+---
+
+### 🖥️ User Experience
+
+When an encrypted PDF is uploaded:
+
+- A 🔒 Encrypted PDF detected message appears  
+- A secure password input field is displayed (only if needed)  
+- Status updates show the decryption process  
+- Processing continues automatically after successful unlock  
+
+For unencrypted PDFs, there is **no change** in workflow.
+
+---
+
+### 🔒 Security & Privacy
+
+- Passwords are not stored  
+- Decryption occurs temporarily during processing  
+- No external services are used  
+- Files remain within the Streamlit application environment  
+
+---
+
+### ⚠️ Edge Case Handling
+
+The system gracefully handles:
+
+- Incorrect passwords  
+- Unsupported encryption types  
+- PDFs that cannot be decrypted  
+
+Clear error messages are shown without crashing the application.
+
+---
+
+### 📌 Business Impact
+
+- Eliminates failures when users upload protected bank statements  
+- Reduces manual intervention  
+- Improves reliability of the automation workflow  
+- Expands compatibility with real-world banking PDFs  
+
+---
 
 ## 🏦 Supported Bank Formats
 

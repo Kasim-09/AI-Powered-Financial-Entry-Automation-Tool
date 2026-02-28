@@ -6,6 +6,11 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
+from src.financial_entry_automation.pdf_security import (
+    detect_encrypted_pdf_bytes,
+    ensure_unencrypted_pdf,
+    PdfEncryptionError,
+)
 from src.financial_entry_automation.pdf_extractor import extract_transactions_pdfplumber
 from src.financial_entry_automation.validation import validate_dataframe, summarize_issues
 from src.financial_entry_automation.exporter import dataframe_to_csv_bytes
@@ -97,6 +102,30 @@ st.divider()
 with st.sidebar:
     st.header("📄 Input")
     uploaded = st.file_uploader("Upload bank statement PDF", type=["pdf"])
+
+    # --- Encryption handling (new) ---
+    pdf_password: str | None = None
+    is_encrypted_pdf = False
+    if uploaded is not None:
+        try:
+            is_encrypted_pdf = detect_encrypted_pdf_bytes(uploaded.getvalue())
+        except ImportError as e:
+            st.error(str(e))
+            st.stop()
+
+        st.session_state["is_encrypted_pdf"] = bool(is_encrypted_pdf)
+        if is_encrypted_pdf:
+            st.info("🔒 Encrypted PDF detected. Enter the password to unlock it for processing.")
+            pdf_password = st.text_input(
+                "PDF password",
+                type="password",
+                placeholder="Enter password…",
+                help="Used only to decrypt this file for the current session.",
+            )
+            st.session_state["pdf_password"] = pdf_password
+        else:
+            st.session_state["pdf_password"] = ""
+
     st.markdown("---")
     st.subheader("⚙️ Options")
     show_raw = st.toggle("Show raw extracted rows", value=False)
@@ -119,11 +148,34 @@ if uploaded is None:
 # -----------------------------
 # Processing
 # -----------------------------
-status = st.status("Step 1/3 — Extracting transactions from PDF…", expanded=True)
+status = st.status("Step 0/4 — Checking PDF encryption…", expanded=True)
 
 with tempfile.TemporaryDirectory() as td:
     pdf_path = Path(td) / uploaded.name
     pdf_path.write_bytes(uploaded.getbuffer())
+
+    # New: automatically handle encrypted PDFs by creating an unencrypted copy first.
+    try:
+        if st.session_state.get("is_encrypted_pdf", False):
+            status.update(label="Step 0/4 — Removing PDF password…", state="running")
+            pw = st.session_state.get("pdf_password") or None
+            out_path = Path(td) / f"{pdf_path.stem}.unencrypted.pdf"
+            dec = ensure_unencrypted_pdf(pdf_path, password=pw, output_pdf_path=out_path)
+            pdf_path = Path(dec.output_path) if dec.output_path else pdf_path
+            status.update(label="Step 0/4 — Password removed. Continuing…", state="running")
+        else:
+            status.update(label="Step 0/4 — PDF is not encrypted. Continuing…", state="running")
+    except PdfEncryptionError as e:
+        status.update(label="Password removal failed.", state="error")
+        st.error(str(e))
+        st.stop()
+    except Exception as e:
+        status.update(label="Encryption check failed.", state="error")
+        st.error(f"Could not check/remove PDF password: {e}")
+        st.stop()
+
+    status.update(label="Step 1/4 — Extracting transactions from PDF…", state="running")
+
 
     try:
         df_raw, extraction_issues = extract_transactions_pdfplumber(str(pdf_path))
@@ -140,18 +192,18 @@ with tempfile.TemporaryDirectory() as td:
             st.dataframe(pd.DataFrame([i.__dict__ for i in extraction_issues]), use_container_width=True, hide_index=True)
         st.stop()
 
-    status.update(label="Step 2/3 — Validating and cleaning…", state="running")
+    status.update(label="Step 2/4 — Validating and cleaning…", state="running")
 
     df_clean, validation_issues = validate_dataframe(df_raw)
     issues = extraction_issues + validation_issues
     summary = summarize_issues(issues)
 
     if summary["errors"] > 0:
-        status.update(label="Step 3/3 — Review required (errors found).", state="error")
+        status.update(label="Step 3/4 — Review required (errors found).", state="error")
     elif summary["warnings"] > 0:
-        status.update(label="Step 3/3 — Ready to export (warnings found).", state="complete")
+        status.update(label="Step 3/4 — Ready to export (warnings found).", state="complete")
     else:
-        status.update(label="Step 3/3 — Ready to export (no issues).", state="complete")
+        status.update(label="Step 3/4 — Ready to export (no issues).", state="complete")
 
 # -----------------------------
 # Dashboard row
