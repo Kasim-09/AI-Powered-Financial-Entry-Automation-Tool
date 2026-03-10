@@ -1,4 +1,4 @@
-# 💳 AI-Powered Financial Entry Automation Tool
+# 💳 Financial Entry Automation Tool
 
 ## Overview
 
