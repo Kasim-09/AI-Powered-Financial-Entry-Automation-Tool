@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+# kasim new change after 2024-06 cutoff: added automatic handling of encrypted PDFs by creating an unencrypted copy for processing. This allows users to upload password-protected bank statements without manual decryption steps. The app detects encryption, prompts for a password, and attempts to remove it before extraction. Errors during this process are handled gracefully with user feedback.
 import tempfile
 from pathlib import Path
 
